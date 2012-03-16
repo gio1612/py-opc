@@ -3,7 +3,7 @@ import time
 import calendar
 import ConfigParser
 from optparse import OptionParser
-
+import psycopg2
 
 cfg = ConfigParser.RawConfigParser()
 cfg.read('srv.cfg')
@@ -19,10 +19,34 @@ status_co = opc.connect(server)
 #cur = conn.cursor()
 #while status_co == True:
 
+db=cfg.get('DATA_BASE_INFO','dbname');
+db_host=cfg.get('DATA_BASE_INFO','host');
+db_user=cfg.get('DATA_BASE_INFO','user');
+db_pass=cfg.get('DATA_BASE_INFO','password');
 
-for i in range(len(var)):
-	valor, quality, fecha = opc.read(var[i][1])
-	fecha =time.strftime("%Y-%m-%d %H:%M:%S",time.localtime(calendar.timegm(time.strptime(fecha,"%m/%d/%y %H:%M:%S"))))
-	print fecha	
-opc.close()
+conn = psycopg2.connect('dbname='+db+' host='+db_host+' user='+db_user+' password='+db_pass)
+cur = conn.cursor()
+
+dato1 = ('100','good','03/15/12 01:00:00')
+dato2 = ('10','bad','03/15/12 10:00:00')
+dato = (dato1,dato2)
+
+"""while status_co == True:
+	for i in range(len(var)):
+		dato = opc.read(var[i][0])
+		n =time.strftime("%Y-%m-%d %H:%M:%S",time.localtime(calendar.timegm(time.strptime(dato[i][2],"%m/%d/%y %H:%M:%S"))))
+"""		
+		for i in range(len(var)):
+			valor, quality, fecha = opc.read(var[i][1])
+			fecha =time.strftime("%Y-%m-%d %H:%M:%S",time.localtime(calendar.timegm(time.strptime(fecha,"%m/%d/%y %H:%M:%S"))))
+			print fecha	
+		opc.close()
+
+		if quality == 'Good':
+			cur.execute("INSERT INTO variable_valor (variable,fecha,valor) VALUES ('%s', '%s', %f)", (var[i][0],fecha,valor))
+
+cur.close()
+conn.close()
+
+
 
